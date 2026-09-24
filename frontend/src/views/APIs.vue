@@ -2,10 +2,16 @@
   <div>
     <div class="page-header">
       <h3>API 配置</h3>
-      <a-button type="primary" @click="showCreateModal = true">
-        <template #icon><icon-plus /></template>
-        新建 API
-      </a-button>
+      <a-space>
+        <a-button @click="showImportModal = true">
+          <template #icon><icon-import /></template>
+          导入 OpenAPI
+        </a-button>
+        <a-button type="primary" @click="showCreateModal = true">
+          <template #icon><icon-plus /></template>
+          新建 API
+        </a-button>
+      </a-space>
     </div>
 
     <a-card :loading="projectStore.loading">
@@ -135,6 +141,12 @@
         </a-collapse>
       </a-form>
     </a-modal>
+
+    <SwaggerImportModal
+      v-model:visible="showImportModal"
+      :project-id="projectId"
+      @imported="projectStore.fetchAPIs(projectId)"
+    />
   </div>
 </template>
 
@@ -142,15 +154,17 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { Message, Modal } from '@arco-design/web-vue';
-import { IconPlus, IconCopy, IconDelete } from '@arco-design/web-vue/es/icon';
+import { IconPlus, IconCopy, IconDelete, IconImport } from '@arco-design/web-vue/es/icon';
 import { useProjectStore } from '../store';
 import type { MockAPI } from '../types';
 import MonacoEditor from '../components/MonacoEditor.vue';
+import SwaggerImportModal from '../components/SwaggerImportModal.vue';
 
 const route = useRoute();
 const projectStore = useProjectStore();
 
 const showCreateModal = ref(false);
+const showImportModal = ref(false);
 const editingAPI = ref<MockAPI | null>(null);
 const apiForm = ref({
   method: 'GET',

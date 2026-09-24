@@ -25,7 +25,7 @@ docker compose up -d --build
 - 动态响应：`{{name.fullName}}`、`{{internet.email}}`、`{{repeat 5|...}}` 等 gofakeit 模板
 - 条件响应：按 query/body 字段匹配返回不同响应（如 `role=admin`）
 - 请求日志：记录方法、路径、Headers、Body、Query、响应状态与响应体
-- Swagger/OpenAPI 导入：上传 OpenAPI 2.0/3.0 JSON 自动生成接口
+- Swagger/OpenAPI 导入：上传 OpenAPI 2.0/3.0 JSON 后先预览（新增/重复/无法解析分类），重复项可跳过或原地替换（请求日志保持关联），确认后仅写入所选条目并支持失败重试
 - 鉴权：JWT + RBAC（lead 管理员 / dev 普通用户）
 - 可靠性：登录/注册与 Mock 接口分路由限流、结构化访问日志、优雅关闭、MySQL 连接池与启动重试
 
@@ -137,7 +137,8 @@ npm run dev
 | GET/PUT/DELETE | /api/v1/projects/:id | 项目详情 / 更新 / 删除 |
 | GET/POST | /api/v1/projects/:projectId/apis | 接口列表 / 新建 |
 | GET/PUT/DELETE | /api/v1/projects/:projectId/apis/:id | 接口详情 / 更新 / 删除 |
-| POST | /api/v1/projects/:projectId/swagger/import | 导入 OpenAPI |
+| POST | /api/v1/projects/:projectId/swagger/preview | 解析 OpenAPI 返回导入预览（不落库） |
+| POST | /api/v1/projects/:projectId/swagger/commit | 按预览选择提交导入（返回逐条失败明细） |
 | GET/DELETE | /api/v1/projects/:projectId/logs | 请求日志 / 清空 |
 | ANY | /mock/:projectId/*path | 公开 Mock 引擎 |
 | GET | /healthz、/readyz | 健康检查 |

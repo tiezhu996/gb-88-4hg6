@@ -55,7 +55,8 @@
         <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/apis</code></td><td>新建接口</td></tr>
         <tr><td><span class="method PUT">PUT</span></td><td><code>/api/v1/projects/:projectId/apis/:id</code></td><td>更新接口</td></tr>
         <tr><td><span class="method DELETE">DELETE</span></td><td><code>/api/v1/projects/:projectId/apis/:id</code></td><td>删除接口</td></tr>
-        <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/swagger/import</code></td><td>导入 OpenAPI 文档自动生成接口</td></tr>
+        <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/swagger/preview</code></td><td>解析 OpenAPI 返回导入预览（新增/重复/无法解析，不落库）</td></tr>
+        <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/swagger/commit</code></td><td>按预览选择提交导入（逐条保存，返回失败明细）</td></tr>
       </table>
     </div>
     <div class="card">

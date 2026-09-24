@@ -54,6 +54,53 @@ export interface Pagination {
   total: number;
 }
 
+export type SwaggerEntryStatus = 'new' | 'duplicate';
+export type SwaggerAction = 'create' | 'replace' | 'skip';
+
+export interface SwaggerPreviewEntry {
+  method: string;
+  path: string;
+  statusCode: number;
+  responseBody: string;
+  status: SwaggerEntryStatus;
+  existingId?: number;
+}
+
+export interface SwaggerInvalidEntry {
+  path: string;
+  method?: string;
+  reason: string;
+}
+
+export interface SwaggerPreviewResult {
+  entries: SwaggerPreviewEntry[];
+  invalid: SwaggerInvalidEntry[];
+  newCount: number;
+  dupCount: number;
+  invalidCount: number;
+}
+
+export interface SwaggerImportSelection {
+  method: string;
+  path: string;
+  action: SwaggerAction;
+}
+
+export interface SwaggerImportFailure {
+  method: string;
+  path: string;
+  action: string;
+  reason: string;
+}
+
+export interface SwaggerCommitResult {
+  created: number;
+  replaced: number;
+  skipped: number;
+  failed: number;
+  failures: SwaggerImportFailure[];
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;

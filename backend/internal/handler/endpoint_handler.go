@@ -111,20 +111,42 @@ func (h *EndpointHandler) Delete(c *gin.Context) {
 	util.OK(c, gin.H{"deleted": true})
 }
 
-// ImportSwagger handles POST /projects/:projectId/swagger/import.
-func (h *EndpointHandler) ImportSwagger(c *gin.Context) {
+// PreviewSwagger handles POST /projects/:projectId/swagger/preview.
+// It parses an OpenAPI document and returns the classified import preview
+// without persisting anything.
+func (h *EndpointHandler) PreviewSwagger(c *gin.Context) {
 	projectID, ok := parseID(c)
 	if !ok {
 		return
 	}
-	var req dto.SwaggerImportRequest
+	var req dto.SwaggerPreviewRequest
 	if !util.BindAndValidate(c, &req) {
 		return
 	}
-	created, err := h.svc.ImportOpenAPI(projectID, middleware.GetUserID(c), middleware.GetRole(c), req.Document)
+	preview, err := h.svc.PreviewOpenAPI(projectID, middleware.GetUserID(c), middleware.GetRole(c), req.Document)
 	if err != nil {
 		util.Fail(c, err)
 		return
 	}
-	util.OK(c, gin.H{"created": created})
+	util.OK(c, preview)
+}
+
+// CommitSwagger handles POST /projects/:projectId/swagger/commit.
+// It applies only the entries selected by the user on the preview page and
+// reports per-entry save failures (partial success).
+func (h *EndpointHandler) CommitSwagger(c *gin.Context) {
+	projectID, ok := parseID(c)
+	if !ok {
+		return
+	}
+	var req dto.SwaggerCommitRequest
+	if !util.BindAndValidate(c, &req) {
+		return
+	}
+	result, err := h.svc.CommitOpenAPI(projectID, middleware.GetUserID(c), middleware.GetRole(c), req)
+	if err != nil {
+		util.Fail(c, err)
+		return
+	}
+	util.OK(c, result)
 }
