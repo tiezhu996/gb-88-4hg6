@@ -55,7 +55,9 @@
         <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/apis</code></td><td>新建接口</td></tr>
         <tr><td><span class="method PUT">PUT</span></td><td><code>/api/v1/projects/:projectId/apis/:id</code></td><td>更新接口</td></tr>
         <tr><td><span class="method DELETE">DELETE</span></td><td><code>/api/v1/projects/:projectId/apis/:id</code></td><td>删除接口</td></tr>
-        <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/swagger/import</code></td><td>导入 OpenAPI 文档自动生成接口</td></tr>
+        <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/swagger/preview</code></td><td>预览 OpenAPI 导入：按方法+路径返回新增/重复/无法解析条目，不写入数据</td></tr>
+        <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/swagger/commit</code></td><td>确认导入：仅写入选中条目，返回新增/替换数量及逐条失败明细</td></tr>
+        <tr><td><span class="method POST">POST</span></td><td><code>/api/v1/projects/:projectId/swagger/import</code></td><td>一键导入 OpenAPI（旧接口，新增并跳过重复，推荐使用 preview + commit）</td></tr>
       </table>
     </div>
     <div class="card">

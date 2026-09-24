@@ -64,6 +64,19 @@ func (r *EndpointRepository) Delete(id uint) error {
 	return nil
 }
 
+// FindByMethodPath loads the endpoint of a project uniquely identified by
+// method and path. It returns ErrNotFound when no such endpoint exists.
+func (r *EndpointRepository) FindByMethodPath(projectID uint, method, path string) (*model.MockAPI, error) {
+	var e model.MockAPI
+	if err := r.db.Where("project_id = ? AND method = ? AND path = ?", projectID, method, path).First(&e).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("find endpoint by method/path: %w", err)
+	}
+	return &e, nil
+}
+
 // Match finds the first endpoint matching method and path (with :param support).
 func (r *EndpointRepository) Match(projectID uint, method, path string) (*model.MockAPI, map[string]string, error) {
 	endpoints, err := r.ListByProject(projectID)

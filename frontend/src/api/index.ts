@@ -1,5 +1,15 @@
 import axios from 'axios';
-import type { User, Project, MockAPI, RequestLog, Pagination, ApiResponse } from '../types';
+import type {
+  User,
+  Project,
+  MockAPI,
+  RequestLog,
+  Pagination,
+  ApiResponse,
+  ImportPreview,
+  ImportSelection,
+  ImportCommitResult
+} from '../types';
 
 // The Go backend wraps every response in { code, message, data }.
 // This interceptor normalizes it to the frontend's { success, data, message } shape.
@@ -87,4 +97,11 @@ export const requestLogApi = {
       params: { page, page_size: pageSize }
     }),
   clearLogs: (projectId: string) => api.delete<ApiResponse<void>>(`/projects/${projectId}/logs`)
+};
+
+export const swaggerApi = {
+  preview: (projectId: string, document: unknown) =>
+    api.post<ApiResponse<ImportPreview>>(`/projects/${projectId}/swagger/preview`, { document }),
+  commit: (projectId: string, document: unknown, selections: ImportSelection[]) =>
+    api.post<ApiResponse<ImportCommitResult>>(`/projects/${projectId}/swagger/commit`, { document, selections })
 };

@@ -54,6 +54,49 @@ export interface Pagination {
   total: number;
 }
 
+// OpenAPI import preview / commit
+export type ImportAction = 'create' | 'skip' | 'replace';
+
+export interface ImportPreviewItem {
+  method: string;
+  path: string;
+  statusCode: number;
+  responseBody: string;
+  existingId?: string;
+}
+
+export interface ImportInvalidItem {
+  method: string;
+  path: string;
+  reason: string;
+}
+
+export interface ImportPreview {
+  new: ImportPreviewItem[];
+  duplicate: ImportPreviewItem[];
+  invalid: ImportInvalidItem[];
+}
+
+export interface ImportSelection {
+  method: string;
+  path: string;
+  action: ImportAction;
+}
+
+export interface ImportFailure {
+  method: string;
+  path: string;
+  action: ImportAction;
+  reason: string;
+}
+
+export interface ImportCommitResult {
+  created: number;
+  replaced: number;
+  skipped: number;
+  failed: ImportFailure[];
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;

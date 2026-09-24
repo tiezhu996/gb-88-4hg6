@@ -111,7 +111,52 @@ func (h *EndpointHandler) Delete(c *gin.Context) {
 	util.OK(c, gin.H{"deleted": true})
 }
 
-// ImportSwagger handles POST /projects/:projectId/swagger/import.
+// PreviewSwagger handles POST /projects/:projectId/swagger/preview.
+// It parses the document and returns new/duplicate/invalid entries without
+// persisting anything, so the UI can show an import preview.
+func (h *EndpointHandler) PreviewSwagger(c *gin.Context) {
+	projectID, ok := parseID(c)
+	if !ok {
+		return
+	}
+	var req dto.SwaggerImportRequest
+	if !util.BindAndValidate(c, &req) {
+		return
+	}
+	preview, err := h.svc.PreviewOpenAPI(projectID, middleware.GetUserID(c), middleware.GetRole(c), req.Document)
+	if err != nil {
+		util.Fail(c, err)
+		return
+	}
+	util.OK(c, preview)
+}
+
+// CommitSwagger handles POST /projects/:projectId/swagger/commit.
+// It writes only the entries selected in the preview and reports per-entry
+// failures so the client can retain the preview and retry.
+func (h *EndpointHandler) CommitSwagger(c *gin.Context) {
+	projectID, ok := parseID(c)
+	if !ok {
+		return
+	}
+	var req dto.SwaggerCommitRequest
+	if !util.BindAndValidate(c, &req) {
+		return
+	}
+	result, err := h.svc.CommitOpenAPI(
+		projectID, middleware.GetUserID(c), middleware.GetRole(c),
+		req.Document, req.Selections,
+	)
+	if err != nil {
+		util.Fail(c, err)
+		return
+	}
+	util.OK(c, result)
+}
+
+// ImportSwagger handles POST /projects/:projectId/swagger/import (legacy).
+// Prefer the preview + commit flow; this endpoint keeps one-shot imports
+// working for older clients, creating new endpoints and skipping duplicates.
 func (h *EndpointHandler) ImportSwagger(c *gin.Context) {
 	projectID, ok := parseID(c)
 	if !ok {

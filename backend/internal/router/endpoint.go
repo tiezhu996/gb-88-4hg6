@@ -19,5 +19,7 @@ func registerEndpoint(api *gin.RouterGroup, h *Handlers, cfg *config.Config, log
 		apis.DELETE("/:id", h.Endpoint.Delete)
 	}
 
+	api.POST("/projects/:projectId/swagger/preview", middleware.JWTAuth(cfg, logger), h.Endpoint.PreviewSwagger)
+	api.POST("/projects/:projectId/swagger/commit", middleware.JWTAuth(cfg, logger), h.Endpoint.CommitSwagger)
 	api.POST("/projects/:projectId/swagger/import", middleware.JWTAuth(cfg, logger), h.Endpoint.ImportSwagger)
 }

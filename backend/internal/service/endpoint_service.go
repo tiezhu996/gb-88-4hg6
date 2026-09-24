@@ -1,11 +1,8 @@
 package service
 
 import (
-	"encoding/json"
 	"log/slog"
-	"strings"
 
-	"github.com/mockhub/mockhub/internal/constants"
 	"github.com/mockhub/mockhub/internal/dto"
 	"github.com/mockhub/mockhub/internal/model"
 	"github.com/mockhub/mockhub/internal/repository"
@@ -99,104 +96,38 @@ func (s *EndpointService) Delete(projectID, id, userID uint, role string) error 
 	return nil
 }
 
-// ImportOpenAPI parses an OpenAPI 2.0/3.0 document and creates endpoints
-// from every path + method pair that has a JSON example response.
+// ImportOpenAPI is kept for compatibility with callers that expect the old
+// one-shot behavior. New clients should use PreviewOpenAPI + CommitOpenAPI so
+// users can inspect new/duplicate/invalid entries before anything is written.
 func (s *EndpointService) ImportOpenAPI(projectID, userID uint, role string, doc any) (int, error) {
-	if _, err := s.checkAccess(projectID, userID, role); err != nil {
+	preview, err := s.PreviewOpenAPI(projectID, userID, role, doc)
+	if err != nil {
 		return 0, err
 	}
-	raw, err := json.Marshal(doc)
+	selections := make([]dto.SwaggerImportSelection, 0, len(preview.New)+len(preview.Duplicate))
+	for _, item := range preview.New {
+		selections = append(selections, dto.SwaggerImportSelection{
+			Method: item.Method, Path: item.Path, Action: dto.ImportActionCreate,
+		})
+	}
+	// The legacy endpoint skipped duplicates silently.
+	for _, item := range preview.Duplicate {
+		selections = append(selections, dto.SwaggerImportSelection{
+			Method: item.Method, Path: item.Path, Action: dto.ImportActionSkip,
+		})
+	}
+	if len(selections) == 0 {
+		return 0, nil
+	}
+	result, err := s.CommitOpenAPI(projectID, userID, role, doc, selections)
 	if err != nil {
-		return 0, constants.NewAppError(constants.CodeBadRequest, "无效的 OpenAPI 文档")
+		return 0, err
 	}
-	var parsed map[string]any
-	if err := json.Unmarshal(raw, &parsed); err != nil {
-		return 0, constants.NewAppError(constants.CodeBadRequest, "无效的 OpenAPI JSON")
-	}
-	paths, ok := parsed["paths"].(map[string]any)
-	if !ok {
-		return 0, constants.NewAppError(constants.CodeBadRequest, "文档缺少 paths 字段")
-	}
-	created := 0
-	for path, methodsAny := range paths {
-		methods, ok := methodsAny.(map[string]any)
-		if !ok {
-			continue
-		}
-		for method, opAny := range methods {
-			method = upper(method)
-			if !isHTTPMethod(method) {
-				continue
-			}
-			op, ok := opAny.(map[string]any)
-			if !ok {
-				continue
-			}
-			body := s.exampleResponse(op)
-			status := 200
-			if responses, ok := op["responses"].(map[string]any); ok {
-				for codeStr, respAny := range responses {
-					code := atoiSafe(codeStr)
-					if code >= 200 && code < 300 {
-						status = code
-						if resp, ok := respAny.(map[string]any); ok {
-							if ex := exampleFromResponse(resp); ex != "" {
-								body = ex
-							}
-						}
-						break
-					}
-				}
-			}
-			e := &model.MockAPI{
-				ProjectID:    projectID,
-				Path:         path,
-				Method:       method,
-				StatusCode:   status,
-				ResponseBody: body,
-			}
-			if err := s.endpoints.Create(e); err != nil {
-				continue
-			}
-			created++
-		}
-	}
-	s.logger.Info("openapi imported", "project_id", projectID, "created", created)
-	return created, nil
+	return result.Created, nil
 }
 
 func (s *EndpointService) checkAccess(projectID, userID uint, role string) (*model.Project, error) {
 	return checkProjectAccess(s.projects, projectID, userID, role)
-}
-
-func (s *EndpointService) exampleResponse(op map[string]any) string {
-	if reqBody, ok := op["requestBody"].(map[string]any); ok {
-		if content, ok := reqBody["content"].(map[string]any); ok {
-			if js, ok := content["application/json"].(map[string]any); ok {
-				if ex, ok := js["example"]; ok {
-					b, _ := json.Marshal(ex)
-					return string(b)
-				}
-			}
-		}
-	}
-	return `{"code":0,"message":"ok"}`
-}
-
-func exampleFromResponse(resp map[string]any) string {
-	if content, ok := resp["content"].(map[string]any); ok {
-		if js, ok := content["application/json"].(map[string]any); ok {
-			if ex, ok := js["example"]; ok {
-				b, _ := json.Marshal(ex)
-				return string(b)
-			}
-		}
-	}
-	return ""
-}
-
-func upper(s string) string {
-	return strings.ToUpper(s)
 }
 
 func isHTTPMethod(s string) bool {
